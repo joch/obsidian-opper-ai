@@ -10,8 +10,15 @@ const DEFAULT_SETTINGS: OpperSettings = {
 	baseUrl: 'https://api.opper.ai/v2'
 }
 
+interface OpperCallOptions {
+	instructions?: string;
+	inputSchema?: any;
+	outputSchema?: any;
+	context?: any;
+}
+
 interface OpperAPI {
-	call: (functionName: string, input: any, context?: any) => Promise<any>;
+	call: (functionName: string, input: any, options?: OpperCallOptions) => Promise<any>;
 }
 
 export default class OpperAIPlugin extends Plugin {
@@ -23,8 +30,8 @@ export default class OpperAIPlugin extends Plugin {
 
 		// Initialize the API
 		this.api = {
-			call: async (functionName: string, input: any, context?: any) => {
-				return await this.callOpper(functionName, input, context);
+			call: async (functionName: string, input: any, options?: OpperCallOptions) => {
+				return await this.callOpper(functionName, input, options);
 			}
 		};
 
@@ -46,7 +53,7 @@ export default class OpperAIPlugin extends Plugin {
 		await this.saveData(this.settings);
 	}
 
-	private async callOpper(functionName: string, input: any, context?: any): Promise<any> {
+	private async callOpper(functionName: string, input: any, options?: OpperCallOptions): Promise<any> {
 		if (!this.settings.apiKey) {
 			throw new Error('Opper API key not configured. Please set it in plugin settings.');
 		}
@@ -58,8 +65,21 @@ export default class OpperAIPlugin extends Plugin {
 			input: input
 		};
 
-		if (context) {
-			body.context = context;
+		// Add optional parameters if provided
+		if (options?.context) {
+			body.context = options.context;
+		}
+
+		if (options?.instructions) {
+			body.instructions = options.instructions;
+		}
+
+		if (options?.inputSchema) {
+			body.input_schema = options.inputSchema;
+		}
+
+		if (options?.outputSchema) {
+			body.output_schema = options.outputSchema;
 		}
 
 		try {
