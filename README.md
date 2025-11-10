@@ -1,94 +1,182 @@
-# Obsidian Sample Plugin
+# Opper AI for Obsidian
 
-This is a sample plugin for Obsidian (https://obsidian.md).
+Integrate [Opper AI](https://opper.ai) into Obsidian, enabling AI-powered Templater templates with structured input/output.
 
-This project uses TypeScript to provide type checking and documentation.
-The repo depends on the latest plugin API (obsidian.d.ts) in TypeScript Definition format, which contains TSDoc comments describing what it does.
+## Features
 
-This sample plugin demonstrates some of the basic functionality the plugin API can do.
-- Adds a ribbon icon, which shows a Notice when clicked.
-- Adds a command "Open Sample Modal" which opens a Modal.
-- Adds a plugin setting tab to the settings page.
-- Registers a global click event and output 'click' to the console.
-- Registers a global interval which logs 'setInterval' to the console.
+- **Templater Integration**: Call Opper AI functions directly from Templater templates
+- **Structured I/O**: Support for input and output schemas with JSON validation
+- **Inline Instructions**: Define AI instructions on-the-fly without pre-creating functions
+- **Context Support**: Pass additional context to AI calls
+- **Settings UI**: Configure your Opper API key securely in Obsidian
 
-## First time developing plugins?
+## Installation
 
-Quick starting guide for new plugin devs:
+### Via BRAT (Recommended)
 
-- Check if [someone already developed a plugin for what you want](https://obsidian.md/plugins)! There might be an existing plugin similar enough that you can partner up with.
-- Make a copy of this repo as a template with the "Use this template" button (login to GitHub if you don't see it).
-- Clone your repo to a local development folder. For convenience, you can place this folder in your `.obsidian/plugins/your-plugin-name` folder.
-- Install NodeJS, then run `npm i` in the command line under your repo folder.
-- Run `npm run dev` to compile your plugin from `main.ts` to `main.js`.
-- Make changes to `main.ts` (or create new `.ts` files). Those changes should be automatically compiled into `main.js`.
-- Reload Obsidian to load the new version of your plugin.
-- Enable plugin in settings window.
-- For updates to the Obsidian API run `npm update` in the command line under your repo folder.
+1. Install [BRAT](https://github.com/TfTHacker/obsidian42-brat) plugin
+2. Open Command Palette and run "BRAT: Add a beta plugin for testing"
+3. Enter: `joch/obsidian-opper-ai`
+4. Enable the plugin in Settings → Community Plugins
 
-## Releasing new releases
+### Manual Installation
 
-- Update your `manifest.json` with your new version number, such as `1.0.1`, and the minimum Obsidian version required for your latest release.
-- Update your `versions.json` file with `"new-plugin-version": "minimum-obsidian-version"` so older versions of Obsidian can download an older version of your plugin that's compatible.
-- Create new GitHub release using your new version number as the "Tag version". Use the exact version number, don't include a prefix `v`. See here for an example: https://github.com/obsidianmd/obsidian-sample-plugin/releases
-- Upload the files `manifest.json`, `main.js`, `styles.css` as binary attachments. Note: The manifest.json file must be in two places, first the root path of your repository and also in the release.
-- Publish the release.
+1. Download `main.js` and `manifest.json` from the [latest release](https://github.com/joch/obsidian-opper-ai/releases)
+2. Create folder: `VaultFolder/.obsidian/plugins/opper-ai/`
+3. Copy downloaded files to the folder
+4. Enable the plugin in Settings → Community Plugins
 
-> You can simplify the version bump process by running `npm version patch`, `npm version minor` or `npm version major` after updating `minAppVersion` manually in `manifest.json`.
-> The command will bump version in `manifest.json` and `package.json`, and add the entry for the new version to `versions.json`
+## Configuration
 
-## Adding your plugin to the community plugin list
+1. Go to Settings → Opper AI
+2. Enter your Opper API key (get one at [platform.opper.ai](https://platform.opper.ai))
+3. Optionally customize the base URL (default: `https://api.opper.ai/v2`)
 
-- Check the [plugin guidelines](https://docs.obsidian.md/Plugins/Releasing/Plugin+guidelines).
-- Publish an initial version.
-- Make sure you have a `README.md` file in the root of your repo.
-- Make a pull request at https://github.com/obsidianmd/obsidian-releases to add your plugin.
+## Usage
 
-## How to use
+### Basic Setup
 
-- Clone this repo.
-- Make sure your NodeJS is at least v16 (`node --version`).
-- `npm i` or `yarn` to install dependencies.
-- `npm run dev` to start compilation in watch mode.
+Create a Templater user script (e.g., `apps/templater-scripts/opper_helper.js`):
 
-## Manually installing the plugin
-
-- Copy over `main.js`, `styles.css`, `manifest.json` to your vault `VaultFolder/.obsidian/plugins/your-plugin-id/`.
-
-## Improve code quality with eslint (optional)
-- [ESLint](https://eslint.org/) is a tool that analyzes your code to quickly find problems. You can run ESLint against your plugin to find common bugs and ways to improve your code. 
-- To use eslint with this project, make sure to install eslint from terminal:
-  - `npm install -g eslint`
-- To use eslint to analyze this project use this command:
-  - `eslint main.ts`
-  - eslint will then create a report with suggestions for code improvement by file and line number.
-- If your source code is in a folder, such as `src`, you can use eslint with this command to analyze all files in that folder:
-  - `eslint ./src/`
-
-## Funding URL
-
-You can include funding URLs where people who use your plugin can financially support it.
-
-The simple way is to set the `fundingUrl` field to your link in your `manifest.json` file:
-
-```json
-{
-    "fundingUrl": "https://buymeacoffee.com"
+```javascript
+function opperHelper(tp) {
+    return {
+        call: async (functionName, input, options) => {
+            const opperPlugin = app.plugins.plugins['opper-ai'];
+            if (!opperPlugin) {
+                throw new Error('Opper AI plugin not found');
+            }
+            return await opperPlugin.api.call(functionName, input, options);
+        }
+    };
 }
+
+module.exports = opperHelper;
 ```
 
-If you have multiple URLs, you can also do:
+### Example: Simple Function Call
 
-```json
-{
-    "fundingUrl": {
-        "Buy Me a Coffee": "https://buymeacoffee.com",
-        "GitHub Sponsor": "https://github.com/sponsors",
-        "Patreon": "https://www.patreon.com/"
+```javascript
+<%*
+const opper = tp.user.opper_helper(tp);
+const result = await opper.call('respond', "What is the capital of Sweden?");
+tR += result.message;
+%>
+```
+
+### Example: Structured Output
+
+```javascript
+<%*
+const opper = tp.user.opper_helper(tp);
+const result = await opper.call('parse-date',
+    {
+        natural_language: "next monday",
+        current_date: "2025-11-09"
+    },
+    {
+        outputSchema: {
+            type: "object",
+            properties: {
+                date: { type: "string", pattern: "^[0-9]{4}-[0-9]{2}-[0-9]{2}$" },
+                reasoning: { type: "string" }
+            },
+            required: ["date"]
+        }
     }
-}
+);
+
+// Access structured output
+const parsedDate = result.json_payload.date; // "2025-11-10"
+%>
 ```
 
-## API Documentation
+### Example: Inline Instructions
 
-See https://github.com/obsidianmd/obsidian-api
+```javascript
+<%*
+const opper = tp.user.opper_helper(tp);
+const result = await opper.call('dynamic-task',
+    { task: "Summarize this text: ..." },
+    {
+        instructions: "Provide a concise 2-sentence summary",
+        outputSchema: {
+            type: "object",
+            properties: {
+                summary: { type: "string" }
+            }
+        }
+    }
+);
+%>
+```
+
+## API Reference
+
+### `opper.call(functionName, input, options)`
+
+Call an Opper AI function with optional configuration.
+
+**Parameters:**
+- `functionName` (string): Name of the Opper function to call
+- `input` (any): Input data for the function
+- `options` (object, optional):
+  - `instructions` (string): AI instructions for this call
+  - `inputSchema` (object): JSON schema for input validation
+  - `outputSchema` (object): JSON schema for structured output
+  - `context` (any): Additional context data
+
+**Returns:** Promise<any>
+- `message` (string): Text response from AI
+- `json_payload` (object): Structured output (when using outputSchema)
+- `span_id` (string): Trace ID for debugging
+- `usage` (object): Token usage statistics
+- `cost` (object): Cost breakdown
+
+## Development
+
+### Building the Plugin
+
+```bash
+# Install dependencies
+npm install
+
+# Development mode (auto-rebuild on changes)
+npm run dev
+
+# Production build
+npm run build
+```
+
+### Creating a Release
+
+Simply create and push a git tag - the GitHub Actions workflow will automatically:
+1. Update `manifest.json` with the tag version
+2. Update `versions.json` with compatibility info
+3. Build the plugin
+4. Create a GitHub release with assets
+
+```bash
+git tag 1.2.0
+git push origin 1.2.0
+```
+
+The workflow ensures the manifest version always matches the git tag, preventing BRAT version mismatches.
+
+## Use Cases
+
+- **Natural Language Date Parsing**: Convert "next monday" to YYYY-MM-DD
+- **Smart Templates**: Generate context-aware content
+- **Data Extraction**: Parse unstructured text into structured data
+- **Content Summarization**: Summarize notes, articles, or journal entries
+- **Dynamic Workflows**: Build adaptive note-taking workflows
+
+## Support
+
+- **Issues**: [GitHub Issues](https://github.com/joch/obsidian-opper-ai/issues)
+- **Opper Documentation**: [docs.opper.ai](https://docs.opper.ai)
+- **Templater Documentation**: [templater.obsidian.guide](https://templater.obsidian.guide)
+
+## License
+
+MIT

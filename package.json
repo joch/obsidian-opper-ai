@@ -1,16 +1,20 @@
 {
-	"name": "obsidian-sample-plugin",
-	"version": "1.0.0",
-	"description": "This is a sample plugin for Obsidian (https://obsidian.md)",
+	"name": "obsidian-opper-ai",
+	"version": "1.1.0",
+	"description": "Integrate Opper AI into Obsidian for AI-powered Templater templates with structured input/output",
 	"main": "main.js",
 	"scripts": {
 		"dev": "node esbuild.config.mjs",
 		"build": "tsc -noEmit -skipLibCheck && node esbuild.config.mjs production",
 		"version": "node version-bump.mjs && git add manifest.json versions.json"
 	},
-	"keywords": [],
-	"author": "",
+	"keywords": ["obsidian", "plugin", "ai", "templater", "opper"],
+	"author": "joch",
 	"license": "MIT",
+	"repository": {
+		"type": "git",
+		"url": "https://github.com/joch/obsidian-opper-ai.git"
+	},
 	"devDependencies": {
 		"@types/node": "^16.11.6",
 		"@typescript-eslint/eslint-plugin": "5.29.0",
