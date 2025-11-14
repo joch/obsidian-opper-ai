@@ -15,6 +15,7 @@ interface OpperCallOptions {
 	inputSchema?: any;
 	outputSchema?: any;
 	context?: any;
+	model?: string;
 }
 
 interface OpperAPI {
@@ -80,6 +81,10 @@ export default class OpperAIPlugin extends Plugin {
 
 		if (options?.outputSchema) {
 			body.output_schema = options.outputSchema;
+		}
+
+		if (options?.model) {
+			body.model = options.model;
 		}
 
 		try {
